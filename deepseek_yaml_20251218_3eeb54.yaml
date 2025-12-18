@@ -1,0 +1,24 @@
+name: Daily Discord Countdown
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Runs at 9 AM UTC daily
+  workflow_dispatch:     # Allows manual trigger from GitHub UI
+
+jobs:
+  send-countdown:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install requests
+      run: pip install requests
+    
+    - name: Calculate and send countdown
+      env:
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+      run: python send_countdown.py

@@ -1,0 +1,52 @@
+import requests
+from datetime import datetime
+import os
+
+def get_countdown():
+    now = datetime.now()
+    year = now.year
+    target = datetime(year, 4, 1, 18, 20, 0)
+    
+    if now > target:
+        target = datetime(year + 1, 4, 1, 18, 20, 0)
+    
+    diff = target - now
+    days = diff.days
+    hours = diff.seconds // 3600
+    minutes = (diff.seconds % 3600) // 60
+    
+    return days, hours, minutes, target.year
+
+def main():
+    webhook_url = os.environ.get('WEBHOOK_URL')
+    
+    if not webhook_url:
+        print("ERROR: WEBHOOK_URL not set!")
+        return
+    
+    days, hours, minutes, target_year = get_countdown()
+    
+    message = (
+        f"📅 **DAILY COUNTDOWN FROM GITHUB**\n\n"
+        f"⏳ **{days} days, {hours} hours, {minutes} minutes**\n"
+        f"until **April 1st, {target_year} at 18:20**\n\n"
+        f"_Automatically sent from GitHub Actions_"
+    )
+    
+    data = {
+        "content": message,
+        "username": "GitHub Countdown Bot ⏰",
+        "avatar_url": "https://cdn-icons-png.flaticon.com/512/25/25231.png"
+    }
+    
+    try:
+        response = requests.post(webhook_url, json=data)
+        if response.status_code == 204:
+            print(f"✅ Success! Sent: {days} days remaining")
+        else:
+            print(f"❌ Error: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Failed: {e}")
+
+if __name__ == "__main__":
+    main()
