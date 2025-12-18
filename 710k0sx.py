@@ -1,0 +1,68 @@
+﻿import os
+import discord
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# ====== CONFIG (use env vars, not hardcoded secrets) ======
+TOKEN = os.getenv("DISCORD_TOKEN")  # set in GitHub Secrets / .env
+CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0"))  # set in GitHub Secrets / env
+TZ_NAME = os.getenv("TZ_NAME", "America/Chicago")
+# ==========================================================
+
+intents = discord.Intents.default()
+intents.message_content = True  # required for reading commands
+client = discord.Client(intents=intents)
+
+def get_countdown(tz: ZoneInfo):
+    """Countdown to April 1st at 18:20 (6:20 PM) in America/Chicago time."""
+    now = datetime.now(tz=tz)
+    year = now.year
+    target = datetime(year, 4, 1, 18, 20, 0, tzinfo=tz)
+    if now > target:
+        target = datetime(year + 1, 4, 1, 18, 20, 0, tzinfo=tz)
+
+    diff = target - now
+    days = diff.days
+    hours = diff.seconds // 3600
+    minutes = (diff.seconds % 3600) // 60
+    seconds = diff.seconds % 60
+    return days, hours, minutes, seconds, target
+
+@client.event
+async def on_ready():
+    print(f"✅ Logged in as: {client.user}")
+    tz = ZoneInfo(TZ_NAME)
+
+    # Send the daily message on startup (the workflow starts it once/day)
+    channel = client.get_channel(CHANNEL_ID)
+    if not channel:
+        print("❌ Channel not found. Check CHANNEL_ID and bot permissions.")
+        await client.close()
+        return
+
+    days, hours, minutes, seconds, target = get_countdown(tz)
+    msg = (
+        f"⏳ **COUNTDOWN TO APRIL 1ST, {target.year} AT 6:20 PM (Chicago time)**\n\n"
+        f"```\n"
+        f"Days:    {days}\n"
+        f"Hours:   {hours}\n"
+        f"Minutes: {minutes}\n"
+        f"Seconds: {seconds}\n"
+        f"```\n"
+        f"**Target:** {target.strftime('%A, %B %d, %Y at %I:%M %p %Z')}"
+    )
+
+    await channel.send(msg)
+    print("✅ Daily countdown message sent. Exiting.")
+    await client.close()
+
+def main():
+    if not TOKEN:
+        raise SystemExit("Missing DISCORD_TOKEN env var.")
+    if CHANNEL_ID == 0:
+        raise SystemExit("Missing/invalid CHANNEL_ID env var.")
+
+    client.run(TOKEN)
+
+if __name__ == "__main__":
+    main()
