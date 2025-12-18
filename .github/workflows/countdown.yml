@@ -1,46 +1,38 @@
-name: Discord Countdown
-
+name: Simple Countdown
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 9 * * *'
-  workflow_dispatch:
-
 jobs:
-  bot:
+  send:
     runs-on: ubuntu-latest
     steps:
       - name: Send countdown
         env:
-          URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
         run: |
-          python3 -c "
-import requests, os
-from datetime import datetime
-
-webhook = os.getenv('URL')
-now = datetime.now()
-year = now.year
-
-# Target is April 1st 18:20
-target = datetime(year, 4, 1, 18, 20, 0)
-if now > target:
-    target = datetime(year + 1, 4, 1, 18, 20, 0)
-
-diff = target - now
-days = diff.days
-hours = diff.seconds // 3600
-minutes = (diff.seconds % 3600) // 60
-
-msg = f'''📅 **DAILY COUNTDOWN**
-
-{days} days, {hours} hours, {minutes} minutes
-until April 1st, {target.year} at 18:20'''
-
-data = {'content': msg, 'username': 'Countdown Bot'}
-r = requests.post(webhook, json=data)
-
-if r.status_code == 204:
-    print('✅ Sent successfully')
-else:
-    print(f'❌ Error: {r.status_code}')
-"
+          # Get current date in seconds
+          NOW=$(date +%s)
+          
+          # Get target date (April 1st current year)
+          YEAR=$(date +%Y)
+          TARGET=$(date -d "${YEAR}-04-01 18:20:00" +%s)
+          
+          # If past April 1st, use next year
+          if [ $NOW -gt $TARGET ]; then
+            YEAR=$((YEAR + 1))
+            TARGET=$(date -d "${YEAR}-04-01 18:20:00" +%s)
+          fi
+          
+          # Calculate days
+          SECONDS=$((TARGET - NOW))
+          DAYS=$((SECONDS / 86400))
+          HOURS=$(((SECONDS % 86400) / 3600))
+          
+          # Send to Discord
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"📅 **Daily Countdown:** ${DAYS} days, ${HOURS} hours until April 1st, ${YEAR} at 18:20\", \"username\": \"Countdown Bot\"}" \
+            "$WEBHOOK_URL"
+          
+          echo "✅ Sent countdown"
