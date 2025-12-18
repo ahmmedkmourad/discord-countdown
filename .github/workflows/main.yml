@@ -36,18 +36,37 @@ jobs:
           hours=$(((seconds_left % 86400) / 3600))
           minutes=$(((seconds_left % 3600) / 60))
           
-          # Create message
-          message="📅 **DAILY COUNTDOWN FROM GITHUB**
+          # Send to Discord using Python for better string handling
+          python3 -c "
+import requests
+import json
+import os
 
-⏳ **$days days, $hours hours, $minutes minutes**
-until **April 1st, $target_year at 18:20**
+webhook = os.environ.get('WEBHOOK_URL')
+days = $days
+hours = $hours
+minutes = $minutes
+target_year = $target_year
 
-_Automatically sent from GitHub Actions_"
-          
-          # Send to Discord using curl
-          curl -X POST \
-               -H "Content-Type: application/json" \
-               -d "{\"content\": \"$message\", \"username\": \"Countdown Bot ⏰\", \"avatar_url\": \"https://cdn-icons-png.flaticon.com/512/3208/3208720.png\"}" \
-               $WEBHOOK_URL
-          
-          echo "✅ Countdown sent: $days days remaining"
+message = f'''📅 **DAILY COUNTDOWN FROM GITHUB**
+
+⏳ **{days} days, {hours} hours, {minutes} minutes**
+until **April 1st, {target_year} at 18:20**
+
+_Automatically sent from GitHub Actions_'''
+
+data = {
+    'content': message,
+    'username': 'Countdown Bot ⏰',
+    'avatar_url': 'https://cdn-icons-png.flaticon.com/512/3208/3208720.png'
+}
+
+try:
+    response = requests.post(webhook, json=data)
+    if response.status_code == 204:
+        print(f'✅ Success! Sent: {days} days remaining')
+    else:
+        print(f'❌ Error: {response.status_code}')
+except Exception as e:
+    print(f'❌ Failed: {e}')
+"
