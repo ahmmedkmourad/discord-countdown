@@ -1,72 +1,44 @@
-name: Daily Discord Countdown
+name: Countdown Bot
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # 9 AM UTC daily
-  workflow_dispatch:      # Allows manual trigger
+    - cron: '0 9 * * *'
+  workflow_dispatch:
 
 jobs:
-  send-countdown:
+  bot:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Send Discord countdown
-        env:
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-        run: |
-          #!/bin/bash
-          
-          # Calculate days until April 1st
-          current_year=$(date +%Y)
-          current_timestamp=$(date +%s)
-          target_timestamp=$(date -d "$current_year-04-01 18:20:00" +%s)
-          
-          # If we passed April 1st, use next year
-          if [ $current_timestamp -gt $target_timestamp ]; then
-            next_year=$((current_year + 1))
-            target_timestamp=$(date -d "$next_year-04-01 18:20:00" +%s)
-            target_year=$next_year
-          else
-            target_year=$current_year
-          fi
-          
-          # Calculate difference
-          seconds_left=$((target_timestamp - current_timestamp))
-          days=$((seconds_left / 86400))
-          hours=$(((seconds_left % 86400) / 3600))
-          minutes=$(((seconds_left % 3600) / 60))
-          
-          # Send to Discord using Python for better string handling
-          python3 -c "
-import requests
-import json
-import os
+    - name: Install Python
+      run: |
+        python3 -m pip install requests
+        
+    - name: Run countdown script
+      env:
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+      run: |
+        python3 << 'EOF'
+import requests, os
+from datetime import datetime
 
-webhook = os.environ.get('WEBHOOK_URL')
-days = $days
-hours = $hours
-minutes = $minutes
-target_year = $target_year
+url = os.getenv('WEBHOOK_URL')
+now = datetime.now()
+year = now.year
 
-message = f'''📅 **DAILY COUNTDOWN FROM GITHUB**
+# Calculate target date
+target = datetime(year, 4, 1, 18, 20, 0)
+if now > target:
+    target = datetime(year + 1, 4, 1, 18, 20, 0)
 
-⏳ **{days} days, {hours} hours, {minutes} minutes**
-until **April 1st, {target_year} at 18:20**
+# Calculate time left
+diff = target - now
+days = diff.days
+hours = diff.seconds // 3600
 
-_Automatically sent from GitHub Actions_'''
+# Create message
+msg = f"📅 **Daily Countdown:** {days} days, {hours} hours until April 1st, {target.year} at 18:20"
 
-data = {
-    'content': message,
-    'username': 'Countdown Bot ⏰',
-    'avatar_url': 'https://cdn-icons-png.flaticon.com/512/3208/3208720.png'
-}
-
-try:
-    response = requests.post(webhook, json=data)
-    if response.status_code == 204:
-        print(f'✅ Success! Sent: {days} days remaining')
-    else:
-        print(f'❌ Error: {response.status_code}')
-except Exception as e:
-    print(f'❌ Failed: {e}')
-"
+# Send to Discord
+requests.post(url, json={"content": msg, "username": "Countdown Bot"})
+print(f"Sent: {days} days remaining")
+EOF
