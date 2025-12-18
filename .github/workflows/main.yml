@@ -9,36 +9,47 @@ jobs:
   bot:
     runs-on: ubuntu-latest
     steps:
-    - name: Install Python
-      run: |
-        python3 -m pip install requests
-        
+    - name: Install requests
+      run: python3 -m pip install requests
+      
     - name: Run countdown script
       env:
         WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
       run: |
-        python3 << 'EOF'
+        python3 -c "
 import requests, os
 from datetime import datetime
 
 url = os.getenv('WEBHOOK_URL')
+if not url:
+    print('ERROR: WEBHOOK_URL not set')
+    exit(1)
+
 now = datetime.now()
 year = now.year
-
-# Calculate target date
 target = datetime(year, 4, 1, 18, 20, 0)
+
 if now > target:
     target = datetime(year + 1, 4, 1, 18, 20, 0)
 
-# Calculate time left
-diff = target - now
-days = diff.days
-hours = diff.seconds // 3600
+days = (target - now).days
+hours = (target - now).seconds // 3600
+minutes = ((target - now).seconds % 3600) // 60
 
-# Create message
-msg = f"📅 **Daily Countdown:** {days} days, {hours} hours until April 1st, {target.year} at 18:20"
+msg = f'📅 **Daily Countdown:** {days} days, {hours} hours, {minutes} minutes until April 1st, {target.year} at 18:20'
 
-# Send to Discord
-requests.post(url, json={"content": msg, "username": "Countdown Bot"})
-print(f"Sent: {days} days remaining")
-EOF
+data = {
+    'content': msg,
+    'username': 'Countdown Bot ⏰',
+    'avatar_url': 'https://cdn-icons-png.flaticon.com/512/3208/3208720.png'
+}
+
+try:
+    r = requests.post(url, json=data)
+    if r.status_code == 204:
+        print(f'✅ Sent: {days} days remaining')
+    else:
+        print(f'❌ Error: {r.status_code}')
+except Exception as e:
+    print(f'❌ Failed: {e}')
+"
