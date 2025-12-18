@@ -1,27 +1,13 @@
-name: Countdown Bot
+name: Countdown
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 9 * * *'
 jobs:
-  bot:
+  job1:
     runs-on: ubuntu-latest
     steps:
-    - name: Send message
-      env:
-        URL: ${{ secrets.WEBHOOK_URL }}
-      run: |
-        python3 -c "
-import requests, os
-from datetime import datetime
-webhook = os.getenv('URL')
-now = datetime.now()
-year = now.year
-target = datetime(year, 4, 1, 18, 20, 0)
-if now > target:
-    target = datetime(year + 1, 4, 1, 18, 20, 0)
-days = (target - now).days
-msg = f'Countdown: {days} days until April 1st, {target.year} at 18:20'
-requests.post(webhook, json={'content': msg})
-print('Done')
-"
+      - name: Step 1
+        env:
+          WH: ${{ secrets.WEBHOOK_URL }}
+        run: echo "Test 1"
+      - name: Step 2
+        run: echo "Test 2"
