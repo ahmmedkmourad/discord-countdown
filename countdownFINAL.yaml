@@ -1,0 +1,11 @@
+name: Countdown Bot
+on:
+  workflow_dispatch:
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send
+        env:
+          URL: ${{ secrets.WEBHOOK_URL }}
+        run: echo "Test"
