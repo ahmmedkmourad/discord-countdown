@@ -1,55 +1,35 @@
-name: Countdown Bot
-
+name: Discord Countdown
 on:
   schedule:
     - cron: '0 9 * * *'
   workflow_dispatch:
-
 jobs:
-  bot:
+  discord:
     runs-on: ubuntu-latest
     steps:
-    - name: Install requests
-      run: python3 -m pip install requests
-      
-    - name: Run countdown script
-      env:
-        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+    - name: Calculate days
+      id: calc
       run: |
-        python3 -c "
-import requests, os
+        python3 << "EOF"
 from datetime import datetime
-
-url = os.getenv('WEBHOOK_URL')
-if not url:
-    print('ERROR: WEBHOOK_URL not set')
-    exit(1)
-
 now = datetime.now()
 year = now.year
 target = datetime(year, 4, 1, 18, 20, 0)
-
 if now > target:
     target = datetime(year + 1, 4, 1, 18, 20, 0)
-
 days = (target - now).days
 hours = (target - now).seconds // 3600
-minutes = ((target - now).seconds % 3600) // 60
-
-msg = f'📅 **Daily Countdown:** {days} days, {hours} hours, {minutes} minutes until April 1st, {target.year} at 18:20'
-
-data = {
-    'content': msg,
-    'username': 'Countdown Bot ⏰',
-    'avatar_url': 'https://cdn-icons-png.flaticon.com/512/3208/3208720.png'
-}
-
-try:
-    r = requests.post(url, json=data)
-    if r.status_code == 204:
-        print(f'✅ Sent: {days} days remaining')
-    else:
-        print(f'❌ Error: {r.status_code}')
-except Exception as e:
-    print(f'❌ Failed: {e}')
-"
+print(f'days={days}')
+print(f'hours={hours}')
+print(f'year={target.year}')
+EOF
+    - name: Send to Discord
+      env:
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        DAYS: ${{ steps.calc.outputs.days }}
+        HOURS: ${{ steps.calc.outputs.hours }}
+        YEAR: ${{ steps.calc.outputs.year }}
+      run: |
+        curl -X POST -H "Content-Type: application/json" \
+        -d "{\"content\": \"📅 **Daily Countdown:** $DAYS days, $HOURS hours until April 1st, $YEAR at 18:20\", \"username\": \"Countdown Bot\"}" \
+        "$WEBHOOK_URL"
