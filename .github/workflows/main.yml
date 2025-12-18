@@ -1,21 +1,26 @@
-name: Discord Countdown Bot
+name: Discord Countdown
+
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 9 * * *'
-  workflow_dispatch:
+
 jobs:
-  send:
+  send-message:
     runs-on: ubuntu-latest
+    
     steps:
-    - name: Run Python script
-      env:
-        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      run: |
-        python3 << 'PYSCRIPT'
-import requests, os
+      - name: Send Discord message
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          # Write Python script to file
+          cat > /tmp/countdown.py << "EOF"
+import requests
+import os
 from datetime import datetime
 
-webhook = os.getenv('WEBHOOK_URL')
+url = os.environ.get('WEBHOOK_URL')
 now = datetime.now()
 year = now.year
 
@@ -27,13 +32,11 @@ if now > target:
 days = (target - now).days
 hours = (target - now).seconds // 3600
 
-message = f"📅 **Daily Countdown:** {days} days, {hours} hours until April 1st, {target.year} at 18:20"
+msg = f"📅 **Daily Countdown:** {days} days, {hours} hours until April 1st, {target.year} at 18:20"
 
-requests.post(webhook, json={
-    "content": message,
-    "username": "Countdown Bot",
-    "avatar_url": "https://cdn-icons-png.flaticon.com/512/3208/3208720.png"
-})
-
-print(f"✅ Sent: {days} days remaining")
-PYSCRIPT
+requests.post(url, json={"content": msg, "username": "Countdown Bot"})
+print(f"Sent: {days} days")
+EOF
+          
+          # Run the script
+          python3 /tmp/countdown.py
