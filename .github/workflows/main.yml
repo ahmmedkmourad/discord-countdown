@@ -1,42 +1,12 @@
-name: Discord Countdown
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 9 * * *'
-
+name: Test Workflow
+on: workflow_dispatch
 jobs:
-  send-message:
+  test:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Send Discord message
-        env:
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-        run: |
-          # Write Python script to file
-          cat > /tmp/countdown.py << "EOF"
-import requests
-import os
-from datetime import datetime
-
-url = os.environ.get('WEBHOOK_URL')
-now = datetime.now()
-year = now.year
-
-# Target: April 1st 18:20
-target = datetime(year, 4, 1, 18, 20, 0)
-if now > target:
-    target = datetime(year + 1, 4, 1, 18, 20, 0)
-
-days = (target - now).days
-hours = (target - now).seconds // 3600
-
-msg = f"📅 **Daily Countdown:** {days} days, {hours} hours until April 1st, {target.year} at 18:20"
-
-requests.post(url, json={"content": msg, "username": "Countdown Bot"})
-print(f"Sent: {days} days")
-EOF
-          
-          # Run the script
-          python3 /tmp/countdown.py
+      - name: Test echo
+        run: echo "Hello World"
+      - name: Test date
+        run: date
+      - name: Test python
+        run: python3 --version
