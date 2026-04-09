@@ -32,7 +32,7 @@ jobs:
           # Send to Discord
           curl -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"content\": \"📅 **Daily Countdown:** ${DAYS} days, ${HOURS} hours until April 1st, ${YEAR} at 18:20\", \"username\": \"Countdown Bot\"}" \
+            -d "{\"content\": \"📅 **Daily Countdown:** ${DAYS} days, ${HOURS} hours until May 15th, ${YEAR} at 18:20\", \"username\": \"Countdown Bot\"}" \
             "$WEBHOOK_URL"
           
           echo "✅ Sent countdown"
