@@ -16,7 +16,7 @@ jobs:
           
           # Get target date (April 1st current year)
           YEAR=$(date +%Y)
-          TARGET=$(date -d "${YEAR}-05-15 18:20:00" +%s)
+          TARGET=$(date -d "${YEAR}-05-29 18:20:00" +%s)
           
           # If past April 1st, use next year
           if [ $NOW -gt $TARGET ]; then
