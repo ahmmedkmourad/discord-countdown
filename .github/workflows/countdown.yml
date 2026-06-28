@@ -16,12 +16,12 @@ jobs:
           
           # Get target date (April 1st current year)
           YEAR=$(date +%Y)
-          TARGET=$(date -d "${YEAR}-05-29 18:20:00" +%s)
+          TARGET=$(date -d "${YEAR}-08-17 18:20:00" +%s)
           
           # If past April 1st, use next year
           if [ $NOW -gt $TARGET ]; then
             YEAR=$((YEAR + 1))
-            TARGET=$(date -d "${YEAR}-05-29 18:20:00" +%s)
+            TARGET=$(date -d "${YEAR}-08-17 18:20:00" +%s)
           fi
           
           # Calculate days
@@ -32,7 +32,7 @@ jobs:
           # Send to Discord
           curl -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"content\": \"📅 **Daily Countdown:** ${DAYS} days, ${HOURS} hours until May 29th, ${YEAR} at 18:20\", \"username\": \"Countdown Bot\"}" \
+            -d "{\"content\": \"📅 **Daily Countdown:** ${DAYS} days, ${HOURS} hours until Aug 17th, ${YEAR} at 18:20\", \"username\": \"Countdown Bot\"}" \
             "$WEBHOOK_URL"
           
           echo "✅ Sent countdown"
